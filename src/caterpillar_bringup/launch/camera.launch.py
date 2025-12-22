@@ -14,7 +14,7 @@ def generate_launch_description():
             package='realsense2_camera',
             executable='realsense2_camera_node',
             name='realsense2_camera',
-            output='screen',
+            # output='screen',
             parameters=[{
                 'enable_color': True,
                 'enable_depth': True,
@@ -40,7 +40,7 @@ def generate_launch_description():
             package='rtabmap_sync',
             executable='rgbd_sync',
             name='rgbd_sync',
-            output='screen',
+            # output='screen',
             parameters=[{
                 'approx_sync': True,              # Enable approximate sync for timestamp jitter
                 'approx_sync_max_interval': 0.05, # 50 ms tolerance
@@ -64,7 +64,7 @@ def generate_launch_description():
             package='imu_filter_madgwick',
             executable='imu_filter_madgwick_node',
             name='imu_filter',
-            output='screen',
+            # output='screen',
             parameters=[{
                 'use_mag': False,
                 'publish_tf': False,
@@ -77,4 +77,20 @@ def generate_launch_description():
                 ('/imu/data', '/rtabmap/imu')
             ]
         ),
+
+        Node(
+                package='caterpillar_bringup',  
+                executable='odom_to_base_link',   # dynamic transform node
+                name='odom_to_base_link',
+                #output='screen'
+            ),
+
+        # Static transform from base_link -> camera_link
+        Node(
+            package='tf2_ros',
+            executable='static_transform_publisher',
+            name='base_to_camera',
+            arguments=['0', '0', '0', '0', '0', '0', 'base_link', 'camera_link'],
+            #output='screen'
+        )
 ])

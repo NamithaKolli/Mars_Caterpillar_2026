@@ -1,0 +1,78 @@
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    
+    <!-- Main Navigation with Recovery -->
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      
+      <!-- STANDARD NAV2 NAVIGATION PIPELINE -->
+      <PipelineSequence name="NavigateWithReplanning">
+        
+        <!-- PATH PLANNING with auto-replan -->
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+            <!-- Nav2 clears global costmap if planning fails -->
+            <ClearEntireCostmap name="ClearGlobalCostmap-Context" 
+                                service_name="global_costmap/clear_entirely_global_costmap"/>
+          </RecoveryNode>
+        </RateController>
+        
+        <!-- PATH EXECUTION with obstacle monitoring -->
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath path="{path}" controller_id="FollowPath"/>
+          <!-- Nav2 clears local costmap if following fails -->
+          <ClearEntireCostmap name="ClearLocalCostmap-Context" 
+                              service_name="local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+        
+      </PipelineSequence>
+      
+      <!-- CUSTOM PHYSICAL RECOVERY (Only what Nav2 doesn't do) -->
+      <ReactiveFallback name="RecoveryFallback">
+        
+        <!-- Check if goal was updated (Nav2 standard) -->
+        <GoalUpdated/>
+        
+        <!-- Check if robot is actually stuck (not just replanning) -->
+        <Inverter>
+          <IsStuck/>
+        </Inverter>
+        
+        <!-- Physical extraction sequence -->
+        <SequenceStar name="PhysicalRecovery">
+          
+          <!-- LEVEL 1: Small Backup (40cm) -->
+          <!-- Use case: Touched crater edge, light contact -->
+          <Sequence name="SmallBackup">
+            <BackUp backup_dist="0.40" backup_speed="0.1"/>
+            <ClearEntireCostmap name="ClearLocal-L1" 
+                                service_name="local_costmap/clear_entirely_local_costmap"/>
+          </Sequence>
+          
+          <!-- LEVEL 2: Medium Backup + Turn (70cm + 90°) -->
+          <!-- Use case: Front wheels in crater, need angle change -->
+          <Sequence name="MediumBackupTurn">
+            <BackUp backup_dist="0.70" backup_speed="0.1"/>
+            <Spin spin_dist="1.57"/>  <!-- 90 degrees -->
+            <ClearEntireCostmap name="ClearLocal-L2" 
+                                service_name="local_costmap/clear_entirely_local_costmap"/>
+          </Sequence>
+          
+          <!-- LEVEL 3: Large Backup (100cm) -->
+          <!-- Use case: Fully in 50cm crater, emergency extraction -->
+          <Sequence name="LargeBackup">
+            <BackUp backup_dist="1.0" backup_speed="0.1"/>
+            <ClearEntireCostmap name="ClearLocal-L3" 
+                                service_name="local_costmap/clear_entirely_local_costmap"/>
+            <ClearEntireCostmap name="ClearGlobal-L3" 
+                                service_name="global_costmap/clear_entirely_global_costmap"/>
+          </Sequence>
+          
+        </SequenceStar>
+        
+      </ReactiveFallback>
+      
+    </RecoveryNode>
+    
+  </BehaviorTree>
+</root>

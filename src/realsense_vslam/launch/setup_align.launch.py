@@ -18,6 +18,8 @@ def generate_launch_description():
             parameters=[{
                 'enable_color': True,
                 'enable_depth': True,
+                'enable_gyro': True,
+                'enable_accel': True,
                 'align_depth.enable': True,
                 'unite_imu_method': 1,
                 # 'color_width': 848,    # match depth width #Didnt work
@@ -124,6 +126,17 @@ def generate_launch_description():
                     ),
                 # 'Mem/IncrementalMemory': True, #Didnt work
                 # 'rtabmap_args': '--delete_db_on_start',    # wrong
+                # 'Rtabmap/PublishScene': 'true',    # REQUIRED: Publishes /rtabmap/cloud_map for OctoMap
+                # 'Grid/FromDepth': 'true',          # OPTIONAL: Generates a 2D height map internally (saves you work!)
+                # 'Mem/IncrementalMemory': 'true',   # 'true' = SLAM (Map building), 'false' = Localization only
+                # 'Rtabmap/DetectionRate': '1',
+
+                # # ---------- MAP FOR NAV2 ----------
+                'Grid/FromDepth': 'true',     # <-- create 2D grid from depth
+                'Grid/3D': 'false',           # <-- disable 3D occupancy grid
+        	    'Grid/RangeMax': '5.0',       # optional
+        	    'Grid/CellSize': '0.05',      # 5cm resolution (Nav2 friendly)
+        	    'Grid/GroundIsObstacle': 'false',
             }],
             remappings=[
             ('/rgb/image', '/camera/realsense2_camera/color/image_raw'),

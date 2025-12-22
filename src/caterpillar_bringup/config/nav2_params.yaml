@@ -4,9 +4,9 @@
 #Define all remaining plugins
 #Verify each numerical parameter
 
-amcl:
-  ros__parameters:
-    use_sim_time: False
+#amcl:
+ # ros__parameters:
+  #  use_sim_time: False
     # ... (Standard AMCL params or use RTAB-Map for localization)
 
 bt_navigator:
@@ -15,11 +15,30 @@ bt_navigator:
     global_frame: map
     robot_base_frame: base_link
     odom_frame: odom
-    default_bt_xml_filename: "navigate_to_pose_w_replanning_and_recovery.xml"
+    default_bt_xml_filename: "bt.xml"
     plugin_lib_names:
+    
+    #action nodes
+    - nav2_compute_path_to_pose_action_bt_node
+    - nav2_follow_path_action_bt_node
     - nav2_back_up_action_bt_node
     - nav2_spin_action_bt_node
     - nav2_wait_action_bt_node
+    
+    #service nodes
+    - nav2_clear_costmap_service_bt_node
+    
+    #condition nodes
+    - nav2_initial_pose_received_condition_bt_node
+    - nav2_is_stuck_condition_bt_node
+    - nav2_goal_updated_condition_bt_node
+    - nav2_goal_reached_condition_bt_node
+    
+    #Control/Decorator nodes
+    - nav2_rate_controller_bt_node
+    - nav2_pipeline_sequence_bt_node
+    - nav2_recovery_node_bt_node
+    - nav2_round_robin_node_bt_node
     # ... other standard BT nodes
 
 controller_server:
@@ -157,3 +176,9 @@ global_costmap:
         plugin: "nav2_costmap_2d::StaticLayer"
         map_subscribe_transient_local: True
         map_topic: /map # RTAB-Map Grid
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        inflation_radius: 0.55
+        cost_scaling_factor: 3.0
+

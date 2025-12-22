@@ -1,0 +1,40 @@
+Panels:
+  - Class: rviz_common/Displays
+  - Class: rviz_common/Selection
+  - Class: rviz_common/Tool Properties
+  - Class: rviz_common/Views
+
+Visualization Manager:
+  Global Options:
+    Fixed Frame: map
+
+  Displays:
+    - Name: Map
+      Class: rviz_default_plugins/Map
+      Topic: /map
+
+    - Name: Global Costmap
+      Class: rviz_default_plugins/Costmap
+      Topic: /global_costmap/costmap
+
+    - Name: Local Costmap
+      Class: rviz_default_plugins/Costmap
+      Topic: /local_costmap/costmap
+
+    - Name: RobotModel
+      Class: rviz_default_plugins/RobotModel
+
+    - Name: TF
+      Class: rviz_default_plugins/TF
+
+    - Name: Path
+      Class: rviz_default_plugins/Path
+      Topic: /plan
+
+Tools:
+  - Class: rviz_default_plugins/Interact
+  - Class: rviz_default_plugins/MoveCamera
+  - Class: rviz_default_plugins/Select
+  - Class: rviz_default_plugins/Measure
+  - Class: rviz_default_plugins/SetInitialPose
+  - Class: rviz_default_plugins/SetGoal

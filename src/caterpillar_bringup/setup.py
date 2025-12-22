@@ -22,6 +22,9 @@ setup(
         # INSTALLATION CODE FOR CONFIG FILES
         # Installs all .yaml files from the 'config' folder into share/package_name/config
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
+
+        (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
+
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -36,6 +39,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'odom_to_base_link = caterpillar_bringup.odom_to_base_link:main',
         ],
     },
 )

@@ -40,6 +40,8 @@ setup(
         ],
     },
     entry_points={
-        'console_scripts': [],
+        'console_scripts': [
+            'opencv_heatmap = realsense_vslam.opencv_heatmap:main',
+        ],
     },
 )
