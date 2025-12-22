@@ -1,0 +1,10 @@
+# Goal
+string task_type
+float32 timeout_sec
+---
+# Result
+bool success
+string task_type
+string message
+
+---
