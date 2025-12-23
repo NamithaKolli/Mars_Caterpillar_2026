@@ -29,6 +29,8 @@ def generate_launch_description():
                 # 'depth_width': 848,    # match color width #--
                 # 'depth_height': 480,   # match color height #--
                 # 'depth_fps': 30,
+                'pointcloud.enable': True,
+
             }]    
         ),
 
