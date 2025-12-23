@@ -7,5 +7,14 @@
       Start manipulator task using action server
     </description>
   </class>
-</library>
+  
+  <class
+    name="TimeRemaining"
+    type="TimeRemainingBT"
+    base_class_type="BT::ConditionNode">
+    <description>
+      Checks if competition time remains
+    </description>
+  </class>
 
+</library>

@@ -13,6 +13,11 @@ include_directories(include)
 
 add_library(custom_bt_plugins SHARED
   src/start_task_bt_node.cpp
+  src/time_remaining_bt_node.cpp
+)
+pluginlib_export_plugin_description_file(
+  nav2_behavior_tree
+  plugin/plugin.xml
 )
 
 ament_target_dependencies(custom_bt_plugins
