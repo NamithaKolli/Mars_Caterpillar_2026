@@ -1,0 +1,60 @@
+<root main_tree_to_execute="MainTree">
+  
+  <BehaviorTree ID="MainTree">
+    <WhileDoElse name="MissionLoop">
+      <TimeRemaining/>
+      <Sequence name="ExcavateDumpCycle">
+        <!-- Navigate to excavation with recovery -->
+        <SubTree ID="NavigateWithRecovery" goal="{excavate_pose}"/>
+        <StartTask task_type="excavate"/>
+        <!-- Navigate to dumping with recovery -->
+        <SubTree ID="NavigateWithRecovery" goal="{dump_pose}"/>
+        <StartTask task_type="dump"/>
+      </Sequence>
+      <Idle/>
+    </WhileDoElse>
+  </BehaviorTree>
+  
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <!-- REUSABLE NAVIGATION SUBTREE WITH 3-LEVEL RECOVERY -->
+  <!-- ═══════════════════════════════════════════════════════════════ -->
+  <BehaviorTree ID="NavigateWithRecovery">
+    <RecoveryNode number_of_retries="6">
+      <!-- Nav2 Pipeline -->
+      <PipelineSequence>
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+            <ClearEntireCostmap service_name="global_costmap/clear_entirely_global_costmap"/>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1">
+          <FollowPath path="{path}" controller_id="FollowPath"/>
+          <ClearEntireCostmap service_name="local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+      </PipelineSequence>
+      
+      <!-- Physical Recovery Fallback -->
+      <SequenceStar name="PhysicalRecovery">
+        <!-- L1: 40cm backup -->
+        <Sequence>
+          <BackUp backup_dist="0.40" backup_speed="0.1"/>
+          <ClearEntireCostmap service_name="local_costmap/clear_entirely_local_costmap"/>
+        </Sequence>
+        <!-- L2: 70cm backup + 90° turn -->
+        <Sequence>
+          <BackUp backup_dist="0.70" backup_speed="0.1"/>
+          <Spin spin_dist="1.57"/>
+          <ClearEntireCostmap service_name="local_costmap/clear_entirely_local_costmap"/>
+        </Sequence>
+        <!-- L3: 100cm emergency backup -->
+        <Sequence>
+          <BackUp backup_dist="1.0" backup_speed="0.1"/>
+          <ClearEntireCostmap service_name="local_costmap/clear_entirely_local_costmap"/>
+          <ClearEntireCostmap service_name="global_costmap/clear_entirely_global_costmap"/>
+        </Sequence>
+      </SequenceStar>
+    </RecoveryNode>
+  </BehaviorTree>
+  
+</root>
