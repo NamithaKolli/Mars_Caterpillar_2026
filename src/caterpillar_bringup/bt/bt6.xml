@@ -1,4 +1,4 @@
-<root main_tree_to_execute="MainTree">
+\<root main_tree_to_execute="MainTree">
   
   <BehaviorTree ID="MainTree">
     <WhileDoElse name="MissionLoop">
@@ -35,7 +35,7 @@
       </PipelineSequence>
       
       <!-- Physical Recovery Fallback -->
-      <SequenceStar name="PhysicalRecovery">
+      <ReactiveFallback name="PhysicalRecovery">
         <!-- L1: 40cm backup -->
         <Sequence>
           <BackUp backup_dist="0.40" backup_speed="0.1"/>
@@ -53,7 +53,7 @@
           <ClearEntireCostmap service_name="local_costmap/clear_entirely_local_costmap"/>
           <ClearEntireCostmap service_name="global_costmap/clear_entirely_global_costmap"/>
         </Sequence>
-      </SequenceStar>
+      </ReactiveFallback>
     </RecoveryNode>
   </BehaviorTree>
   

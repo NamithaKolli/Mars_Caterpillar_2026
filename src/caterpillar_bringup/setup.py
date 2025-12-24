@@ -24,11 +24,9 @@ setup(
         (os.path.join('share', package_name, 'config'), glob('config/*.yaml')),
 
         (os.path.join('share', package_name, 'rviz'), glob('rviz/*.rviz')),
-<<<<<<< HEAD
+
         
         (os.path.join('share', package_name, 'bt'),glob('bt/*.xml')),
-=======
->>>>>>> f9688e0 (Costmap changes)
 
     ],
     install_requires=['setuptools'],

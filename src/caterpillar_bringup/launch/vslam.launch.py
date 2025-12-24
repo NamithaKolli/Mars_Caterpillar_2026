@@ -70,12 +70,12 @@ def generate_launch_description():
                 # 'Kp/MaxDepth': 5.0,
                 # 'Kp/DetectorStrategy': 6,   # ORB (most stable)
                 
-                #------------ DATABASE ------------
-                'database_path': os.path.join(
-                    get_package_share_directory('realsense_vslam'),
-                    'map',
-                    'cat_map.db'
-                    ),
+                # #------------ DATABASE ------------
+                # 'database_path': os.path.join(
+                #     get_package_share_directory('realsense_vslam'),
+                #     'map',
+                #     'cat_map.db'
+                #     ),
                 # 'Mem/IncrementalMemory': True, #Didnt work
                 # 'rtabmap_args': '--delete_db_on_start',    # wrong
             }],
