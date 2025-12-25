@@ -120,11 +120,11 @@ def generate_launch_description():
                 'approx_sync_max_interval': 0.02,
                 'topic_queue_size': 30,   # default 10, increase if needed
                 'sync_queue_size': 30,
-                'database_path': os.path.join(
-                    get_package_share_directory('realsense_vslam'),
-                    'map',
-                    'cat_map.db'
-                    ),
+                # 'database_path': os.path.join(
+                #     get_package_share_directory('realsense_vslam'),
+                #     'map',
+                #     'cat_map.db'
+                #     ),
                 # 'Mem/IncrementalMemory': True, #Didnt work
                 # 'rtabmap_args': '--delete_db_on_start',    # wrong
                 # 'Rtabmap/PublishScene': 'true',    # REQUIRED: Publishes /rtabmap/cloud_map for OctoMap

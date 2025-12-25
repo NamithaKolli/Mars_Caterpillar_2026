@@ -16,9 +16,9 @@ def generate_launch_description():
             name='rgbd_odometry',
             # output='screen',
             parameters=[{
-                'frame_id': 'camera_link',
+                'frame_id': 'base_link',
                 'odom_frame_id': 'odom',
-                'publish_tf': False,
+                'publish_tf': True,
                 'approx_sync': True,
                 
             }],
