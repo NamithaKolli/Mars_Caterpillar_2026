@@ -13,7 +13,7 @@ def generate_launch_description():
     params_file = os.path.join(
         pkg_caterpillar,
         'config',
-        'nav2_params.yaml'
+        'nav2_paramsu.yaml'
     )
 
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')

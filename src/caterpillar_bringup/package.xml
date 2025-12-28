@@ -19,6 +19,7 @@
   <exec_depend>nav2_rotation_shim_controller</exec_depend>
   <exec_depend>spatio_temporal_voxel_layer</exec_depend>
   <exec_depend>nav2_smoother</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

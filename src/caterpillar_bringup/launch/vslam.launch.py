@@ -14,7 +14,7 @@ def generate_launch_description():
             package='rtabmap_odom',
             executable='rgbd_odometry',
             name='rgbd_odometry',
-            # output='screen',
+            output='screen',
             parameters=[{
                 'frame_id': 'base_link',
                 'odom_frame_id': 'odom',
@@ -99,7 +99,7 @@ def generate_launch_description():
             name='rtabmap_viz',
             # output='screen',
             parameters=[{
-                'frame_id': 'camera_link',
+                'frame_id': 'base_link',
                 'odom_frame_id': 'odom',
                 'subscribe_odom_info' : True,
                 'subscribe_rgbd': True,

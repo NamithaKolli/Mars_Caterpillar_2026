@@ -1,0 +1,88 @@
+ekf_filter_node:
+  ros__parameters:
+
+    # ------------------------------------------------
+    # General
+    # ------------------------------------------------
+    frequency: 30.0
+    sensor_timeout: 0.2
+    two_d_mode: true
+    publish_tf: true
+
+    # ------------------------------------------------
+    # Frames (CORRECT OWNERSHIP)
+    # ------------------------------------------------
+    map_frame: map              # SLAM owns this
+    odom_frame: odom            # EKF operates here
+    base_link_frame: base_link
+    world_frame: odom           # IMPORTANT: EKF world
+
+    # ------------------------------------------------
+    # OUTPUT
+    # ------------------------------------------------
+    odometry_frame: odom
+    output_frame: base_link
+
+    # =================================================
+    # SENSOR 0 : WHEEL ODOMETRY (ESP32)
+    # Topic: /drive_odom
+    # Use ONLY velocity + yaw rate
+    # =================================================
+    odom0: /drive_odom
+    odom0_config:
+      [ false, false, false,    # x y z (ignore pose)
+        false, false, false,    # roll pitch yaw
+        true,  false, false,    # vx
+        false, false, true ]    # yaw_rate
+    odom0_differential: true
+    odom0_relative: false
+
+    # =================================================
+    # SENSOR 1 : CAMERA / RGBD ODOMETRY (RTAB-Map)
+    # Topic: /odom_camera
+    # Use pose (x,y,yaw) ONLY for drift correction
+    # =================================================
+    odom1: /odom_camera
+    odom1_config:
+      [ true,  true,  false,    # x y
+        false, false, true,     # yaw
+        false, false, false,
+        false, false, false ]
+    odom1_differential: false
+    odom1_relative: false
+
+    # =================================================
+    # SENSOR 2 : IMU
+    # Topic: /imu/data
+    # Use yaw + yaw rate
+    # =================================================
+    imu0: /imu/data
+    imu0_config:
+      [ false, false, false,
+        false, false, true,     # yaw
+        false, false, false,
+        false, false, true ]    # yaw_rate
+    imu0_differential: false
+    imu0_remove_gravitational_acceleration: true
+
+    # ------------------------------------------------
+    # PROCESS NOISE (15x15 Matrix)
+    # State: [x, y, z, roll, pitch, yaw, vx, vy, vz, vroll, vpitch, vyaw, ax, ay, az]
+    # ------------------------------------------------
+    process_noise_covariance: [
+      0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # x
+      0.0,  0.05, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # y
+      0.0,  0.0,  0.001, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, # z (Low for 2D)
+      0.0,  0.0,  0.0,  0.001, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, # roll (Low for 2D)
+      0.0,  0.0,  0.0,  0.0,  0.001, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, # pitch (Low for 2D)
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.03, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # yaw
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025, 0.0, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # vx
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.025, 0.0, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  # vy
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001, 0.0,  0.0,  0.0,  0.0,  0.0,  0.0, # vz
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001, 0.0,  0.0,  0.0,  0.0,  0.0, # vroll
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001, 0.0,  0.0,  0.0,  0.0, # vpitch
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.02, 0.0,  0.0,  0.0,  # vyaw
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001, 0.0, 0.0,  # ax
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001, 0.0, # ay
+      0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.001 # az
+    ]

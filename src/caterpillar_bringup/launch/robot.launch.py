@@ -34,16 +34,12 @@ def generate_launch_description():
         ),
     )
 
-    
-    # rviz_launch = Node(
-    #         package='rviz2',
-    #         executable='rviz2',
-    #         name='rviz2',
-    #         output='screen',
-    #         arguments=['-d', rviz_config_file],
-    #         parameters=[{'use_sim_time': False}]  # optional, set True if using simulation
-    #     )
-    
+    # 3. Define Nav2 Launch
+    rviz2_launch = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_caterpillar, 'launch', 'rviz.launch.py')
+        ),
+    )
 
     # 4. Create the "Delayed" Nav2 Action
     # This waits 10 seconds after the launch file starts before triggering Nav2
@@ -57,17 +53,17 @@ def generate_launch_description():
         actions=[nav2_launch]
     )
 
-    # delayed_RVIZ = TimerAction(
-    #     period=10.0,
-    #     actions=[rviz_launch]
-    # )
+    delayed_RVIZ = TimerAction(
+        period=12.0,
+        actions=[rviz2_launch]
+    )
 
     # 5. Return the list: Start SLAM immediately, start Nav2 after 10s
     return LaunchDescription([
         cam_launch,
         delayed_slam,
         delayed_nav2,
-        # delayed_RVIZ,
+        delayed_RVIZ,
         # odom_base,
         # base_camera
 
