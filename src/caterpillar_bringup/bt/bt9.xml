@@ -1,0 +1,146 @@
+<root main_tree_to_execute="MainTree">
+
+  <!-- ========================== -->
+  <!-- ========= MAIN TREE ====== -->
+  <!-- ========================== -->
+
+  <BehaviorTree ID="MainTree">
+
+    <Sequence name="ExcavationMission">
+
+      <!-- ===================================================== -->
+      <!-- PHASE 1: TELEOP FIND ARUCO ID = 1                      -->
+      <!-- Pose is saved as soon as detection happens             -->
+      <!-- ===================================================== -->
+
+      <WaitAndSaveArucoPose
+        marker_id="1"
+        output_pose="{excavate_pose_1}" />
+
+
+      <!-- ===================================================== -->
+      <!-- PHASE 2: NAVIGATE TO ARUCO 1                           -->
+      <!-- WITH CONTINUOUS ARUCO UPDATES                          -->
+      <!-- ===================================================== -->
+
+      <PipelineSequence name="NavigateWithArucoTracking1">
+
+        <ArucoPoseUpdater
+          marker_id="1"
+          output_pose="{excavate_pose_1}" />
+
+        <SubTree
+          ID="NavigateWithRecovery"
+          goal="{excavate_pose_1}" />
+
+      </PipelineSequence>
+
+
+      <!-- ===================================================== -->
+      <!-- PHASE 3: AUTONOMOUS SPIN TO HELP FIND ARUCO ID = 2     -->
+      <!-- ===================================================== -->
+
+      <Spin spin_dist="6.28"/>
+
+
+      <!-- ===================================================== -->
+      <!-- PHASE 3.5: ENSURE ARUCO ID = 2 POSE IS SAVED           -->
+      <!-- ===================================================== -->
+
+      <WaitAndSaveArucoPose
+        marker_id="2"
+        output_pose="{excavate_pose_2}" />
+
+
+      <!-- ===================================================== -->
+      <!-- PHASE 4: NAVIGATE TO ARUCO 2                           -->
+      <!-- WITH CONTINUOUS ARUCO UPDATES                          -->
+      <!-- ===================================================== -->
+
+      <PipelineSequence name="NavigateWithArucoTracking2">
+
+        <ArucoPoseUpdater
+          marker_id="2"
+          output_pose="{excavate_pose_2}" />
+
+        <SubTree
+          ID="NavigateWithRecovery"
+          goal="{excavate_pose_2}" />
+
+      </PipelineSequence>
+
+
+      <!-- ===================================================== -->
+      <!-- PHASE 5: START HARDCODED EXCAVATION + DUMPING          -->
+      <!-- ===================================================== -->
+
+      <StartHardcodedExcavateDump
+        start_pose="{excavate_pose_2}" />
+
+    </Sequence>
+
+  </BehaviorTree>
+
+
+  <!-- ================================================= -->
+  <!-- ====== REUSABLE NAVIGATION WITH RECOVERY ========= -->
+  <!-- ================================================= -->
+
+  <BehaviorTree ID="NavigateWithRecovery">
+
+    <RecoveryNode number_of_retries="6">
+
+      <PipelineSequence>
+
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1">
+            <ComputePathToPose
+              goal="{goal}"
+              path="{path}"
+              planner_id="GridBased"/>
+            <ClearEntireCostmap
+              service_name="global_costmap/clear_entirely_global_costmap"/>
+          </RecoveryNode>
+        </RateController>
+
+        <RecoveryNode number_of_retries="1">
+          <FollowPath
+            path="{path}"
+            controller_id="FollowPath"/>
+          <ClearEntireCostmap
+            service_name="local_costmap/clear_entirely_local_costmap"/>
+        </RecoveryNode>
+
+      </PipelineSequence>
+
+      <!-- ========= PHYSICAL RECOVERY ========= -->
+      <Fallback>
+
+        <Sequence>
+          <BackUp backup_dist="0.40" backup_speed="0.1"/>
+          <ClearEntireCostmap
+            service_name="local_costmap/clear_entirely_local_costmap"/>
+        </Sequence>
+
+        <Sequence>
+          <BackUp backup_dist="0.70" backup_speed="0.1"/>
+          <Spin spin_dist="1.57"/>
+          <ClearEntireCostmap
+            service_name="local_costmap/clear_entirely_local_costmap"/>
+        </Sequence>
+
+        <Sequence>
+          <BackUp backup_dist="1.0" backup_speed="0.1"/>
+          <ClearEntireCostmap
+            service_name="local_costmap/clear_entirely_local_costmap"/>
+          <ClearEntireCostmap
+            service_name="global_costmap/clear_entirely_global_costmap"/>
+        </Sequence>
+
+      </Fallback>
+
+    </RecoveryNode>
+
+  </BehaviorTree>
+
+</root>

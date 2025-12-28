@@ -1,0 +1,41 @@
+<library path="custom_bt_plugins">
+  <class
+    name="StartTask"
+    type="custom_bt_plugins::StartTaskBT"
+    base_class_type="nav2_behavior_tree::BtActionNode<action_server_cpp::action::Manipulator>">
+    <description>
+      Calls manipulator action server to perform scooping or dropping
+    </description>
+  </class>
+  
+  <class
+    name="TimeRemaining"
+    type="TimeRemainingBT"
+    base_class_type="BT::ConditionNode">
+    <description>
+      Checks if competition time remains
+    </description>
+  </class>
+  
+  <class
+    name="WaitAndSaveArucoPose"
+    type="WaitAndSaveArucoPose"
+    base_class_type="BT::ConditionNode">
+
+    <description>
+      Condition node that listens to ArUco detections and latches the pose
+      the first time the specified marker ID is detected.
+    </description>
+
+  </class>
+  <class
+    name="ArucoPoseUpdater"
+    type="ArucoPoseUpdater"
+    base_class_type="BT::ActionNodeBase">
+    <description>
+      Continuously updates the pose of an ArUco marker when visible without
+      blocking navigation.
+    </description>
+  </class>
+
+</library>
