@@ -80,21 +80,12 @@ def generate_launch_description():
             ]
         ),
 
-<<<<<<< HEAD
-        #Node(
-         #       package='caterpillar_bringup',  
-           #     executable='odom_to_base_link',   # dynamic transform node
-            #    name='odom_to_base_link',
-             #   #output='screen'
-            #),
-=======
         # Node(
         #         package='caterpillar_bringup',  
         #         executable='odom_to_base_link',   # dynamic transform node
         #         name='odom_to_base_link',
         #         #output='screen'
         #     ),
->>>>>>> 1d6b9b1 (Changes)
 
         # Static transform from base_link -> camera_link
         Node(
