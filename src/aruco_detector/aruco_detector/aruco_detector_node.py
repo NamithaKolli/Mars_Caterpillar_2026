@@ -10,6 +10,10 @@ from sensor_msgs.msg import Image, CameraInfo
 from geometry_msgs.msg import PoseStamped
 from std_msgs.msg import Float32, Int16
 
+from visualization_msgs.msg import Marker, MarkerArray
+from aruco_msgs.msg import MarkerArray as ArucoMarkerArray
+from aruco_msgs.msg import Marker as ArucoMarker
+
 
 class ArucoAlignedDepthNode(Node):
     def __init__(self):
@@ -17,49 +21,55 @@ class ArucoAlignedDepthNode(Node):
 
         self.bridge = CvBridge()
 
-        # Camera intrinsics (COLOR camera)
+        # ---------------- Camera intrinsics ----------------
         self.fx = self.fy = self.cx = self.cy = None
-
         self.depth_img = None
 
-        # Thresholds
-        self.thresh_dist = 0.15   # 15 cm → /thresh
-        self.rohan_dist = 1.0     # 1 m   → /rohan
+        # ---------------- Thresholds ----------------
+        self.switch_dist = 1.0
+        self.thresh_dist = 0.15
 
-        # Marker IDs
-        self.marker_ids = {
-            1: "excavation",
-            2: "construction",
-            42: "priority"
-        }
+        # ---------------- ArUco IDs ----------------
+        self.PRIORITY_ID = 1
+        self.EXCAVATION_ID = 2
+        self.HELPER_ID = 3
 
-        # ---------------- PUBLISHERS ----------------
-        self.pose_pubs = {
-            name: self.create_publisher(
-                PoseStamped, f"/{name}_pose", 10
-            )
-            for name in self.marker_ids.values()
-        }
+        # FSM state
+        self.active_goal = self.PRIORITY_ID
 
-        self.goal_pub = self.create_publisher(PoseStamped, "/goal_pose", 10)
-        self.thresh_pub = self.create_publisher(Float32, "/thresh", 10)
-        self.rohan_pub = self.create_publisher(Int16, "/rohan", 10)
+        # ---------------- Publishers ----------------
+        self.goal_pub = self.create_publisher(
+            MarkerArray, "/goal_pose", 10
+        )
+        self.aruco_pub = self.create_publisher(
+            ArucoMarkerArray, "/aruco/detections", 10
+        )
+        self.excavation_pub = self.create_publisher(
+            Float32, "/excavation_pose", 10
+        )
+        self.helper_pose_pub = self.create_publisher(
+            PoseStamped, "/helper_pose", 10
+        )
+        self.helper_id_pub = self.create_publisher(
+            Int16, "/helper_id", 10
+        )
+        self.thresh_pub = self.create_publisher(
+            Float32, "/thresh", 10
+        )
 
-        # ---------------- SUBSCRIBERS ----------------
+        # ---------------- Subscribers ----------------
         self.create_subscription(
             Image,
             "/camera/realsense2_camera/color/image_raw",
             self.color_cb,
             10
         )
-
         self.create_subscription(
             Image,
             "/camera/realsense2_camera/aligned_depth_to_color/image_raw",
             self.depth_cb,
             10
         )
-
         self.create_subscription(
             CameraInfo,
             "/camera/realsense2_camera/color/camera_info",
@@ -67,17 +77,20 @@ class ArucoAlignedDepthNode(Node):
             10
         )
 
-        # ArUco
+        # ---------------- ArUco detector ----------------
         self.aruco_dict = cv2.aruco.getPredefinedDictionary(
             cv2.aruco.DICT_6X6_250
         )
         self.detector = cv2.aruco.ArucoDetector(
-            self.aruco_dict, cv2.aruco.DetectorParameters()
+            self.aruco_dict,
+            cv2.aruco.DetectorParameters()
         )
 
-        self.get_logger().info("✅ ArUco with ALIGNED DEPTH node started")
+        self.get_logger().info("✅ ArUco detector with aruco_msgs + goal logic started")
 
-    # ---------------- CALLBACKS ----------------
+    # ---------------------------------------------------
+    # CALLBACKS
+    # ---------------------------------------------------
 
     def camera_info_cb(self, msg):
         if self.fx is None:
@@ -91,6 +104,23 @@ class ArucoAlignedDepthNode(Node):
             msg, desired_encoding="passthrough"
         )
 
+    def publish_goal_marker(self, marker_id, pose_msg):
+        marker = Marker()
+        marker.header = pose_msg.header
+        marker.id = marker_id
+        marker.type = Marker.SPHERE
+        marker.action = Marker.ADD
+        marker.pose = pose_msg.pose
+        marker.scale.x = 0.15
+        marker.scale.y = 0.15
+        marker.scale.z = 0.15
+        marker.color.g = 1.0
+        marker.color.a = 1.0
+
+        ma = MarkerArray()
+        ma.markers.append(marker)
+        self.goal_pub.publish(ma)
+
     def color_cb(self, msg):
         if self.depth_img is None or self.fx is None:
             return
@@ -100,21 +130,19 @@ class ArucoAlignedDepthNode(Node):
 
         corners, ids, _ = self.detector.detectMarkers(gray)
 
+        aruco_array = ArucoMarkerArray()
+        aruco_array.header = msg.header
+
         if ids is None:
-            cv2.imshow("Aruco seen", frame)
+            self.aruco_pub.publish(aruco_array)
+            cv2.imshow("Aruco", frame)
             cv2.waitKey(1)
             return
 
         cv2.aruco.drawDetectedMarkers(frame, corners, ids)
 
         for i, marker_id in enumerate(ids.flatten()):
-            if marker_id not in self.marker_ids:
-                continue
-
-            label = self.marker_ids[marker_id]
             c = corners[i][0]
-
-            # ---------- CENTER PIXEL ----------
             u = int(np.mean(c[:, 0]))
             v = int(np.mean(c[:, 1]))
 
@@ -122,12 +150,10 @@ class ArucoAlignedDepthNode(Node):
             if depth_mm == 0:
                 continue
 
-            # ---------- TRUE METRIC DEPTH ----------
             Z = depth_mm / 1000.0
             X = (u - self.cx) * Z / self.fx
             Y = (v - self.cy) * Z / self.fy
 
-            # ---------- POSE ----------
             pose = PoseStamped()
             pose.header.stamp = msg.header.stamp
             pose.header.frame_id = "camera_link"
@@ -135,26 +161,37 @@ class ArucoAlignedDepthNode(Node):
             pose.pose.position.y = float(Y)
             pose.pose.position.z = float(Z)
 
-            # Publish all original pose topics
-            self.pose_pubs[label].publish(pose)
-            self.goal_pub.publish(pose)
+            # ---------- aruco_msgs detection ----------
+            aruco_marker = ArucoMarker()
+            aruco_marker.id = int(marker_id)
+            aruco_marker.pose.pose = pose.pose
+            aruco_marker.pose.header = pose.header
+            aruco_array.markers.append(aruco_marker)
 
-            # ---------- /thresh ----------
+            # ---------- safety ----------
             if Z < self.thresh_dist:
                 self.thresh_pub.publish(Float32(data=Z))
 
-            # ---------- /rohan ----------
-            if Z <= self.rohan_dist:
-                if marker_id == 1:
-                    self.rohan_pub.publish(Int16(data=1))
-                elif marker_id == 2:
-                    self.rohan_pub.publish(Int16(data=2))
+            # ---------- helper ----------
+            if marker_id == self.HELPER_ID:
+                self.helper_pose_pub.publish(pose)
+                self.helper_id_pub.publish(Int16(data=self.HELPER_ID))
 
-            # ---------- VISUALIZATION ----------
-            cv2.circle(frame, (u, v), 5, (0, 0, 255), -1)
+            # ---------- priority ----------
+            if self.active_goal == self.PRIORITY_ID and marker_id == self.PRIORITY_ID:
+                self.publish_goal_marker(marker_id, pose)
+                if Z <= self.switch_dist:
+                    self.active_goal = self.EXCAVATION_ID
+                    self.get_logger().info("Priority reached → Excavation active")
+
+            # ---------- excavation ----------
+            if self.active_goal == self.EXCAVATION_ID and marker_id == self.EXCAVATION_ID:
+                self.publish_goal_marker(marker_id, pose)
+                self.excavation_pub.publish(Float32(data=Z))
+
             cv2.putText(
                 frame,
-                f"X:{X:.2f} Y:{Y:.2f} Z:{Z:.2f}",
+                f"ID:{marker_id} Z:{Z:.2f}m",
                 (u + 10, v - 10),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.6,
@@ -162,7 +199,9 @@ class ArucoAlignedDepthNode(Node):
                 2
             )
 
-        cv2.imshow("Aruco seen", frame)
+        self.aruco_pub.publish(aruco_array)
+
+        cv2.imshow("Aruco", frame)
         cv2.waitKey(1)
 
 
